@@ -1,0 +1,137 @@
+﻿@model EquityCalculatorAPI.Models.EquityCalculatorModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Calculator</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
+    <!-- UIKit CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.15.9/css/uikit.min.css" />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+    <!-- UIKit JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.15.9/js/uikit.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.15.9/js/uikit-icons.min.js"></script>
+
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .uk-container {
+            max-width: 1500px;
+            margin: 50px auto;
+            padding: 20px;
+        
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="uk-container uk-margin-top">
+        <h1 class="uk-heading-line uk-text-bold"><span>Equity Calculator</span></h1>
+
+        <div class="uk-grid" uk-grid>
+            <div class="uk-width-1-3@s">
+                <div class="uk-card uk-card-default uk-card-body">
+                    <form id="equityCalculatorForm" class="uk-form-stacked">
+                        <div class="uk-margin">
+                            <label class="uk-form-label uk-text-bold uk-text-default" for="sellingPrice">Selling Price</label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input" type="number" id="sellingPrice" name="sellingPrice" required min="0">
+                            </div>
+                        </div>
+                        <div class="uk-margin">
+                            <label class="uk-form-label uk-text-bold uk-text-default" for="reservationDate">Reservation Date</label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input" type="date" id="reservationDate" name="reservationDate" required>
+                            </div>
+                        </div>
+                        <div class="uk-margin">
+                            <label class="uk-form-label uk-text-bold uk-text-default" for="equityTerm">Equity Term (Months)</label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input" type="number" id="equityTerm" name="equityTerm" required min="0">
+                            </div>
+                        </div>
+                        <button class="uk-button uk-button-primary" type="submit">Calculate</button>
+                    </form>
+                </div>
+            </div>
+
+
+            <div class="uk-width-2-3@s">
+                <div class="uk-card uk-card-default uk-card-body">
+                    <h3 class="uk-card-title">Payment Schedule</h3>
+                    <div class="result" id="result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#equityCalculatorForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const sellingPrice = $('#sellingPrice').val();
+                const reservationDate = $('#reservationDate').val();
+                const equityTerm = $('#equityTerm').val();
+
+                $.ajax({
+                    url: '/api/EquityCalculator/calculate',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        SellingPrice: parseFloat(sellingPrice),
+                        ReservationDate: reservationDate,
+                        EquityTerm: parseInt(equityTerm)
+                    }),
+                    success: function (data) {
+                        let resultHtml = '<table id="paymentSchedule" class="uk-table uk-table-striped"><thead><tr><th>Term</th><th>Balance</th><th>Due Date</th><th>Amount</th><th>Interest</th><th>Insurance</th><th>Total</th></tr></thead><tbody>';
+
+                        data.forEach(item => {
+                            resultHtml += `<tr>
+                                    <td>${item.term}</td>
+                                    <td>${item.balance.toFixed(2)}</td>
+                                    <td>${new Date(item.dueDate).toLocaleDateString()}</td>
+                                    <td>${item.amount.toFixed(2)}</td>
+                                    <td>${item.interest.toFixed(2)}</td>
+                                    <td>${item.insurance.toFixed(2)}</td>
+                                    <td>${item.total.toFixed(2)}</td>
+                                </tr>`;
+                        });
+
+                        resultHtml += '</tbody></table>';
+                        $('#result').html(resultHtml);
+
+                        $('#paymentSchedule').DataTable();
+                    },
+                    error: function () {
+                        $('#result').html('<p>Error calculating equity. Please check your input.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

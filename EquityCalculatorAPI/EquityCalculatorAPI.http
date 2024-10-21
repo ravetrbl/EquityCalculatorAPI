@@ -1,0 +1,6 @@
+@EquityCalculatorAPI_HostAddress = http://localhost:5247
+
+GET {{EquityCalculatorAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
